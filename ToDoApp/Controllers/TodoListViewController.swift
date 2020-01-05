@@ -9,7 +9,7 @@
 import UIKit
 import RealmSwift
 
-class TodoListViewController: UITableViewController {
+class TodoListViewController: SwipeTableViewController {
     
     var todoItems: Results<Item>?
     let realm = try! Realm()
@@ -23,17 +23,18 @@ class TodoListViewController: UITableViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         // delegate for the searchBar is set inside of the Main.storyboard. In code => inside of the viewDidLoad searchBar.delegate = self and after UITableviewController write UISearchBarDelegate
+        tableView.rowHeight = 65
         
     }
     
-    //MARK - Tableview Datasource Methods
+    //MARK: - Tableview Datasource Methods
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return todoItems?.count ?? 1
     }
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         
-        let cell = tableView.dequeueReusableCell(withIdentifier: "ToDoItemCell", for: indexPath)
+        let cell = super.tableView(tableView, cellForRowAt: indexPath)
         
         if let item = todoItems?[indexPath.row] {
             
@@ -47,7 +48,7 @@ class TodoListViewController: UITableViewController {
         return cell
     }
     
-    //MARK - TableView Delegate Methods
+    //MARK:  - TableView Delegate Methods
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         if let item = todoItems?[indexPath.row] {
             do {
@@ -58,8 +59,8 @@ class TodoListViewController: UITableViewController {
                 print("Error saving done status, \(error)")
             }
         }
-        tableView.reloadData()
         tableView.deselectRow(at: indexPath, animated: true)
+        tableView.reloadData()
     }
     
     //MARK: - Add New Items
@@ -102,6 +103,22 @@ class TodoListViewController: UITableViewController {
         
         tableView.reloadData()
     }
+    
+    
+    //MARK: - Delete Data From Swipe
+      
+      override func updateModel(at indexPath: IndexPath) {
+          super.updateModel(at: indexPath) // this is here if you need to run the code that is inside of the superclass
+          if let itemsForDeletion = todoItems?[indexPath.row] {
+              do {
+                  try realm.write {
+                      realm.delete(itemsForDeletion)
+                  }
+              } catch {
+                  print("Error deleting item, \(error)")
+              }
+          }
+      }
 }
 
 

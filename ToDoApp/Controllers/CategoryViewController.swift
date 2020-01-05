@@ -9,7 +9,7 @@
 import UIKit
 import RealmSwift
 
-class CategoryViewController: UITableViewController {
+class CategoryViewController: SwipeTableViewController {
     
     let realm = try! Realm()
     var categories: Results<Category>?
@@ -18,6 +18,7 @@ class CategoryViewController: UITableViewController {
         super.viewDidLoad()
         
         loadCategories()
+        tableView.rowHeight = 70
         
     }
     
@@ -26,8 +27,8 @@ class CategoryViewController: UITableViewController {
     }
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "categoryCell", for: indexPath)
-        cell.textLabel?.text = categories?[indexPath.row].name ?? "No Categories Added Yet" //Nil coalscing operator. If categories are not nil, than we are going to get the item at the indexPath.row and we are going to grab the name property.But if it is nil then
+        let cell = super.tableView(tableView, cellForRowAt: indexPath)
+        cell.textLabel?.text = categories?[indexPath.row].name ?? "No Categories Added Yet" //Nil coalscing operator. If categories are not nil, than we are going to get the item at the indexPath.row and we are going to grab the name property.But if it is nil then show "No Categories Added Yet"
         return cell
     }
     
@@ -52,6 +53,8 @@ class CategoryViewController: UITableViewController {
         
     }
     
+    //MARK: - Data Manipulation Methods
+    
     func save(category: Category) {
         do {
             try realm.write {
@@ -65,10 +68,25 @@ class CategoryViewController: UITableViewController {
     
     func loadCategories() {
         
-        categories = realm.objects(Category.self)
+       categories = realm.objects(Category.self)
         
         tableView.reloadData()
         //        tableView.separatorStyle = .none
+    }
+    
+    //MARK: - Delete Data From Swipe
+    
+    override func updateModel(at indexPath: IndexPath) {
+        super.updateModel(at: indexPath) // this is here if you need to run the code that is inside of the superclass
+        if let categoryForDeletion = categories?[indexPath.row] {
+            do {
+                try realm.write {
+                    realm.delete(categoryForDeletion)
+                }
+            } catch {
+                print("Error deleting category, \(error)")
+            }
+        }
     }
     
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
@@ -83,3 +101,8 @@ class CategoryViewController: UITableViewController {
         }
     }
 }
+
+
+
+
+
