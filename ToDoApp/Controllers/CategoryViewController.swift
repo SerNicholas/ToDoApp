@@ -8,6 +8,7 @@
 
 import UIKit
 import RealmSwift
+import ChameleonFramework
 
 class CategoryViewController: SwipeTableViewController {
     
@@ -19,7 +20,11 @@ class CategoryViewController: SwipeTableViewController {
         
         loadCategories()
         tableView.rowHeight = 70
-        
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+          guard let navBar = navigationController?.navigationBar else { fatalError("Navigation controller does not exist!")}
+        navBar.backgroundColor = UIColor(hexString: "1D9BF6")
     }
     
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
@@ -28,7 +33,12 @@ class CategoryViewController: SwipeTableViewController {
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = super.tableView(tableView, cellForRowAt: indexPath)
-        cell.textLabel?.text = categories?[indexPath.row].name ?? "No Categories Added Yet" //Nil coalscing operator. If categories are not nil, than we are going to get the item at the indexPath.row and we are going to grab the name property.But if it is nil then show "No Categories Added Yet"
+        if let category = categories?[indexPath.row] {
+            cell.textLabel?.text = category.name
+            cell.backgroundColor = UIColor(hexString: category.color)
+            guard let categoryColor = UIColor(hexString: category.color) else { fatalError() }
+            cell.textLabel?.textColor = ContrastColorOf(categoryColor, returnFlat: true)
+        }
         return cell
     }
     
@@ -39,6 +49,7 @@ class CategoryViewController: SwipeTableViewController {
         let action = UIAlertAction(title: "Add", style: .default) { (action) in
             let newCategory = Category()
             newCategory.name = textField.text!
+            newCategory.color = UIColor.randomFlat().hexValue()
             self.save(category: newCategory)
         }
         
@@ -68,10 +79,9 @@ class CategoryViewController: SwipeTableViewController {
     
     func loadCategories() {
         
-       categories = realm.objects(Category.self)
-        
+        categories = realm.objects(Category.self)
         tableView.reloadData()
-        //        tableView.separatorStyle = .none
+        tableView.separatorStyle = .none
     }
     
     //MARK: - Delete Data From Swipe
@@ -91,6 +101,7 @@ class CategoryViewController: SwipeTableViewController {
     
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         performSegue(withIdentifier: "goToItems", sender: self)
+        tableView.deselectRow(at: indexPath, animated: true)
     }
     
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
